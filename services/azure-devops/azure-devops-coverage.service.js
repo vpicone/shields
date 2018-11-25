@@ -79,7 +79,7 @@ module.exports = class AzureDevOpsCoverage extends BaseJsonService {
     return [
       {
         title: 'Azure DevOps coverage',
-        urlPattern: ':organization/:project/:definitionId',
+        pattern: ':organization/:project/:definitionId',
         staticExample: this.render({ coverage: 100 }),
         exampleUrl: 'swellaby/opensource/25',
         keywords: ['vso', 'vsts', 'azure-devops'],
@@ -87,7 +87,7 @@ module.exports = class AzureDevOpsCoverage extends BaseJsonService {
       },
       {
         title: 'Azure DevOps coverage (branch)',
-        urlPattern: ':organization/:project/:definitionId/:branch',
+        pattern: ':organization/:project/:definitionId/:branch',
         staticExample: this.render({ coverage: 100 }),
         exampleUrl: 'swellaby/opensource/25/master',
         keywords: ['vso', 'vsts', 'azure-devops'],
@@ -170,7 +170,7 @@ module.exports = class AzureDevOpsCoverage extends BaseJsonService {
     let total = 0
     json.coverageData.forEach(cd => {
       cd.coverageStats.forEach(coverageStat => {
-        if (coverageStat.label === 'Lines') {
+        if (coverageStat.label === 'Line' || coverageStat.label === 'Lines') {
           covered += coverageStat.covered
           total += coverageStat.total
         }
