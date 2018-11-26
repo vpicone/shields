@@ -1,7 +1,11 @@
 'use strict'
 
 const Joi = require('joi')
-const { objectOfKeyValues } = require('./validators')
+
+const optionalObjectOfKeyValues = Joi.object().pattern(
+  /./,
+  Joi.alternatives().try(Joi.string(), Joi.boolean())
+)
 
 const optionalServiceData = Joi.object({
   label: Joi.string(),
@@ -12,11 +16,13 @@ const optionalServiceData = Joi.object({
 })
 
 const schema = Joi.object({
-  title: Joi.string().required(),
-  namedParams: objectOfKeyValues,
-  queryParams: objectOfKeyValues,
+  // This should be:
+  // title: Joi.string().required(),
+  title: Joi.string(),
+  namedParams: optionalObjectOfKeyValues,
+  queryParams: optionalObjectOfKeyValues.default({}),
   pattern: Joi.string(),
-  staticExample: optionalServiceData,
+  staticPreview: optionalServiceData,
   previewUrl: Joi.string(),
   exampleUrl: Joi.string(),
   keywords: Joi.array()
@@ -24,8 +30,9 @@ const schema = Joi.object({
     .default([]),
   documentation: Joi.string(), // Valid HTML.
 })
-  // .rename('query', 'queryParams', { ignoreUndefined: true })
-  // .rename('urlPattern', 'pattern', { ignoreUndefined: true })
+  .rename('query', 'queryParams', { ignoreUndefined: true })
+  .rename('staticExample', 'staticPreview', { ignoreUndefined: true })
+  .rename('urlPattern', 'pattern', { ignoreUndefined: true })
   .required()
 
 function validateExample(example, index, ServiceClass) {
@@ -35,32 +42,32 @@ function validateExample(example, index, ServiceClass) {
     `Example for ${ServiceClass.name} at index ${index}`
   )
 
-  const { namedParams, pattern, staticExample, previewUrl, exampleUrl } = result
+  const { namedParams, pattern, staticPreview, previewUrl, exampleUrl } = result
 
-  if (staticExample) {
+  if (staticPreview) {
     if (!pattern && !ServiceClass.route.pattern) {
       throw new Error(
-        `Static example for ${
+        `Static preview for ${
           ServiceClass.name
         } at index ${index} does not declare a pattern`
       )
     }
     if (namedParams && exampleUrl) {
       throw new Error(
-        `Static example for ${
+        `Static preview for ${
           ServiceClass.name
         } at index ${index} declares both namedParams and exampleUrl`
       )
     } else if (!namedParams && !exampleUrl) {
       throw new Error(
-        `Static example for ${
+        `Static preview for ${
           ServiceClass.name
         } at index ${index} does not declare namedParams nor exampleUrl`
       )
     }
     if (previewUrl) {
       throw new Error(
-        `Static example for ${
+        `Static preview for ${
           ServiceClass.name
         } at index ${index} also declares a dynamic previewUrl, which is not allowed`
       )
@@ -69,51 +76,58 @@ function validateExample(example, index, ServiceClass) {
     throw Error(
       `Example for ${
         ServiceClass.name
-      } at index ${index} is missing required previewUrl or staticExample`
+      } at index ${index} is missing required previewUrl or staticPreview`
     )
   }
 
   return result
 }
 
-function transformExample(example, index, ServiceClass) {
+function transformExample(inExample, index, ServiceClass) {
   const {
-    title,
+    // We should get rid of this transform, since the class name is never what
+    // we want to see.
+    title = ServiceClass.name,
     namedParams,
     queryParams,
     pattern,
-    staticExample,
+    staticPreview,
     previewUrl,
     exampleUrl,
     keywords,
     documentation,
-  } = validateExample(example, index, ServiceClass)
+  } = validateExample(inExample, index, ServiceClass)
 
-  let staticExampleData
-  if (staticExample) {
-    const badgeData = ServiceClass._makeBadgeData({}, staticExample)
-    staticExampleData = {
+  let example
+  if (namedParams) {
+    example = {
+      pattern: ServiceClass._makeFullUrl(pattern),
+      namedParams,
+      queryParams,
+    }
+  } else {
+    example = {
+      path: ServiceClass._makeFullUrl(exampleUrl || previewUrl),
+      queryParams,
+    }
+  }
+
+  let preview
+  if (staticPreview) {
+    const badgeData = ServiceClass._makeBadgeData({}, staticPreview)
+    preview = {
       label: badgeData.text[0],
       message: `${badgeData.text[1]}`,
       color: badgeData.colorscheme || badgeData.colorB,
     }
+  } else {
+    preview = {
+      path: ServiceClass._makeFullUrl(previewUrl),
+      queryParams,
+    }
   }
 
-  return {
-    title,
-    example: {
-      pattern,
-      namedParams,
-      path: exampleUrl,
-      queryParams,
-    },
-    preview: {
-      ...staticExampleData,
-      path: previewUrl,
-    },
-    keywords,
-    documentation,
-  }
+  return { title, example, preview, keywords, documentation }
 }
 
 module.exports = {

@@ -1,7 +1,17 @@
 'use strict'
 
 const Joi = require('joi')
-const { arrayOfStrings, objectOfKeyValues } = require('./validators')
+const { arrayOfStrings } = require('./validators')
+
+const objectOfKeyValues = Joi.object()
+  .pattern(/./, Joi.alternatives().try(Joi.string(), Joi.boolean()))
+  .required()
+
+const staticBadgeContent = Joi.object({
+  label: Joi.string(),
+  message: Joi.string().required(),
+  color: Joi.string().required(),
+})
 
 const serviceDefinition = Joi.object({
   category: Joi.string().required(),
@@ -11,11 +21,11 @@ const serviceDefinition = Joi.object({
       Joi.object({
         pattern: Joi.string().required(),
         queryParams: arrayOfStrings,
-      }),
-      Joi.object({
-        format: Joi.string().required(),
-        queryParams: arrayOfStrings,
       })
+      // Joi.object({
+      //   format: Joi.string().required(),
+      //   queryParams: arrayOfStrings,
+      // })
     )
     .required(),
   examples: Joi.array()
@@ -37,13 +47,10 @@ const serviceDefinition = Joi.object({
           .required(),
         preview: Joi.alternatives()
           .try(
-            Joi.object({
-              label: Joi.string(),
-              message: Joi.string().required(),
-              color: Joi.string().required(),
-            }).required(),
+            staticBadgeContent,
             Joi.object({
               path: Joi.string().required(), // URL convertible.
+              queryParams: objectOfKeyValues,
             })
           )
           .required(),
@@ -78,7 +85,7 @@ const serviceDefinitionExport = Joi.array()
   .required()
 
 function assertValidServiceDefinitionExport(examples, message = undefined) {
-  Joi.assert(examples, isDefinitionArray, message)
+  Joi.assert(examples, serviceDefinitionExport, message)
 }
 
 module.exports = {

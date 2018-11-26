@@ -476,50 +476,78 @@ describe('BaseService', function() {
 
   describe('getDefinition', function() {
     it('returns the expected result', function() {
-      const [
-        first,
-        second,
-        third,
-        fourth,
-        fifth,
-        sixth,
-      ] = DummyService.getDefinition()
+      const {
+        examples: [first, second, third, fourth, fifth, sixth],
+      } = DummyService.getDefinition()
       expect(first).to.deep.equal({
         title: 'DummyService',
-        exampleUrl: undefined,
-        previewUrl: '/foo/World.svg',
-        urlPattern: undefined,
+        example: {
+          path: '/foo/World',
+          queryParams: {},
+        },
+        preview: {
+          path: '/foo/World',
+          queryParams: {},
+        },
+        keywords: [],
         documentation: undefined,
-        keywords: undefined,
       })
       expect(second).to.deep.equal({
         title: 'DummyService',
-        exampleUrl: undefined,
-        previewUrl: '/foo/World.svg?queryParamA=%21%21%21',
-        urlPattern: undefined,
+        example: {
+          path: '/foo/World',
+          queryParams: { queryParamA: '!!!' },
+        },
+        preview: {
+          path: '/foo/World',
+          queryParams: { queryParamA: '!!!' },
+        },
+        keywords: [],
         documentation: undefined,
-        keywords: undefined,
       })
-      const preparedStaticExample = {
+      expect(third).to.deep.equal({
         title: 'DummyService',
-        exampleUrl: '/foo/World.svg',
-        previewUrl:
-          '/badge/cat-Hello%20namedParamA%3A%20foo%20with%20queryParamA%3A%20bar-lightgrey.svg',
-        urlPattern: '/foo/:world.svg',
-        documentation: undefined,
+        example: {
+          path: '/foo/World',
+          queryParams: {},
+        },
+        preview: {
+          label: 'cat',
+          message: 'Hello namedParamA: foo with queryParamA: bar',
+          color: 'lightgrey',
+        },
         keywords: ['hello'],
-      }
-      expect(third).to.deep.equal(preparedStaticExample)
-      expect(fourth).to.deep.equal(preparedStaticExample)
-      expect(fifth).to.deep.equal(preparedStaticExample)
+        documentation: undefined,
+      })
+      expect(fifth).to.deep.equal({
+        title: 'DummyService',
+        example: {
+          pattern: '/foo/:world',
+          namedParams: { world: 'World' },
+          queryParams: {},
+        },
+        preview: {
+          label: 'cat',
+          message: 'Hello namedParamA: foo with queryParamA: bar',
+          color: 'lightgrey',
+        },
+        keywords: ['hello'],
+        documentation: undefined,
+      })
       expect(sixth).to.deep.equal({
         title: 'DummyService',
-        exampleUrl: '/foo/World.svg?queryParamA=%21%21%21',
-        previewUrl:
-          '/badge/cat-Hello%20namedParamA%3A%20foo%20with%20queryParamA%3A%20bar-lightgrey.svg',
-        urlPattern: '/foo/:world.svg?queryParamA=%21%21%21',
-        documentation: undefined,
+        example: {
+          pattern: '/foo/:world',
+          namedParams: { world: 'World' },
+          queryParams: { queryParamA: '!!!' },
+        },
+        preview: {
+          color: 'lightgrey',
+          label: 'cat',
+          message: 'Hello namedParamA: foo with queryParamA: bar',
+        },
         keywords: ['hello'],
+        documentation: undefined,
       })
     })
   })
