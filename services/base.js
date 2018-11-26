@@ -20,7 +20,9 @@ const {
 } = require('../lib/badge-data')
 const { staticBadgeUrl } = require('../lib/make-badge-url')
 const trace = require('./trace')
-const validateExample = require('./validate-example')
+const { validateExample, transformExample } = require('./transform-example')
+const { assertValidCategory } = require('./categories')
+const { assertValidServiceDefinition } = require('./service-definitions')
 
 function coalesce(...candidates) {
   return candidates.find(c => c !== undefined)
@@ -105,8 +107,8 @@ class BaseService {
    *   explicit props.
    * previewUrl: Deprecated. An explicit example which is rendered as part of
    *   the badge listing.
-   * exampleUrl: Deprecated. An explicit example which will be displayed to
-   *   the user, but not rendered.
+   * exampleUrl: Deprecated. An explicit example which will _not_ be rendered.
+   *   Only the URL itself is shown to the user.
    * keywords: Additional keywords, other than words in the title. This helps
    *   users locate relevant badges.
    * documentation: An HTML string that is included in the badge popup.
@@ -149,47 +151,39 @@ class BaseService {
     }
   }
 
-  /**
-   * Return an array of examples. Each example is prepared according to the
-   * schema in `lib/all-badge-examples.js`.
-   */
-  static prepareExamples() {
-    return this.examples.map((example, index) => {
-      const {
-        title,
-        query,
-        namedParams,
-        exampleUrl,
-        previewUrl,
-        pattern,
-        staticExample,
-        documentation,
-        keywords,
-      } = validateExample(example, index, this)
+  static validateDefinition() {
+    assertValidCategory(this.category, `Category for ${this.name}`)
 
-      let staticExampleData
-      if (staticExample) {
-        const badgeData = this._makeBadgeData({}, staticExample)
-        staticExampleData = {
-          label: badgeData.text[0],
-          message: `${badgeData.text[1]}`,
-          color: badgeData.colorscheme || badgeData.colorB,
-        }
-      }
+    this.examples.forEach((example, index) =>
+      validateExample(example, index, this)
+    )
+  }
 
-      return {
-        title: title ? `${title}` : this.name,
-        base: this.route.base,
-        pattern,
-        namedParams,
-        exampleUrl,
-        queryParams: query,
-        preview: staticExampleData,
-        legacyPreviewUrl: previewUrl,
-        documentation,
-        keywords,
-      }
-    })
+  static getDefinition() {
+    const {
+      category,
+      name,
+      route: { format, pattern, query: queryParams },
+    } = this
+
+    const examples = this.examples.map((example, index) =>
+      transformExample(example, index, this)
+    )
+
+    const result = {
+      category,
+      name,
+      route: {
+        pattern: pattern ? this._makeFullUrl(pattern) : undefined,
+        format: format ? this._makeFullUrl(format) : undefined,
+        queryParams,
+      },
+      examples,
+    }
+
+    assertValidServiceDefinition(result, `getDefinition() for ${this.name}`)
+
+    return result
   }
 
   static get _regexFromPath() {

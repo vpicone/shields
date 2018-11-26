@@ -1,7 +1,9 @@
 'use strict'
 
 const glob = require('glob')
+const groupBy = require('lodash.groupby')
 const BaseService = require('./base')
+const { categories, assertValidCategory } = require('./categories')
 
 class InvalidService extends Error {
   constructor(message) {
@@ -49,6 +51,23 @@ function loadServiceClasses(servicePaths) {
   return serviceClasses
 }
 
+function collectDefinitions() {
+  const prepared = loadServiceClasses()
+    // flatMap.
+    .map(ServiceClass => ServiceClass.prepareExamples())
+    .reduce((accum, these) => accum.concat(these), [])
+
+  const grouped = groupBy(prepared, 'category')
+  // It's the caller's responsibility to validate the categories, so let's
+  // make a confidence check.
+  Object.keys(grouped).forEach(category => assertValidCategory(category))
+
+  return categories.map(({ id, name }) => ({
+    category: { id, name },
+    examples: grouped[id],
+  }))
+}
+
 function loadTesters() {
   return glob.sync(`${__dirname}/**/*.tester.js`).map(path => require(path))
 }
@@ -57,4 +76,5 @@ module.exports = {
   InvalidService,
   loadServiceClasses,
   loadTesters,
+  collectDefinitions,
 }

@@ -1,7 +1,7 @@
 'use strict'
 
 const { expect } = require('chai')
-const validateExample = require('./validate-example')
+const { validateExample } = require('./transform-example')
 
 describe('validateExample function', function() {
   it('passes valid examples', function() {

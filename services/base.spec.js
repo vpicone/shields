@@ -474,7 +474,7 @@ describe('BaseService', function() {
     )
   })
 
-  describe('prepareExamples', function() {
+  describe('getDefinition', function() {
     it('returns the expected result', function() {
       const [
         first,
@@ -483,7 +483,7 @@ describe('BaseService', function() {
         fourth,
         fifth,
         sixth,
-      ] = DummyService.prepareExamples()
+      ] = DummyService.getDefinition()
       expect(first).to.deep.equal({
         title: 'DummyService',
         exampleUrl: undefined,
