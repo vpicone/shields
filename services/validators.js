@@ -7,13 +7,7 @@ module.exports = {
     .integer()
     .min(0)
     .required(),
-
   anyInteger: Joi.number()
     .integer()
-    .required(),
-
-  arrayOfStrings: Joi.array()
-    .items(Joi.string())
-    .allow([])
     .required(),
 }

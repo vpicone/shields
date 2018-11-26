@@ -1,7 +1,11 @@
 'use strict'
 
 const Joi = require('joi')
-const { arrayOfStrings } = require('./validators')
+
+const arrayOfStrings = Joi.array()
+  .items(Joi.string())
+  .allow([])
+  .required()
 
 const objectOfKeyValues = Joi.object()
   .pattern(/./, Joi.alternatives().try(Joi.string(), Joi.boolean()))
@@ -21,11 +25,11 @@ const serviceDefinition = Joi.object({
       Joi.object({
         pattern: Joi.string().required(),
         queryParams: arrayOfStrings,
+      }),
+      Joi.object({
+        format: Joi.string().required(),
+        queryParams: arrayOfStrings,
       })
-      // Joi.object({
-      //   format: Joi.string().required(),
-      //   queryParams: arrayOfStrings,
-      // })
     )
     .required(),
   examples: Joi.array()

@@ -505,7 +505,7 @@ describe('BaseService', function() {
         keywords: [],
         documentation: undefined,
       })
-      expect(third).to.deep.equal({
+      const expectedDefinition = {
         title: 'DummyService',
         example: {
           path: '/foo/World',
@@ -518,7 +518,9 @@ describe('BaseService', function() {
         },
         keywords: ['hello'],
         documentation: undefined,
-      })
+      }
+      expect(third).to.deep.equal(expectedDefinition)
+      expect(fourth).to.deep.equal(expectedDefinition)
       expect(fifth).to.deep.equal({
         title: 'DummyService',
         example: {
